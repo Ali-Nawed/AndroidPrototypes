@@ -18,6 +18,7 @@ import androidx.lifecycle.LifecycleOwner;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
@@ -45,16 +46,16 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private Executor executor = Executors.newSingleThreadExecutor();
-    private SynchronousQueue<ArrayList<Integer>> predictionQueue;
+    private SynchronousQueue<PriorityQueue> predictionQueue;
     private PriorityQueue<PredictionTuple> predictionHolder;
 
 
     private String label1;
     private String label2;
     private String label3;
-    private int label1Prob;
-    private int label2Prob;
-    private int label3Prob;
+    private float label1Prob;
+    private float label2Prob;
+    private float label3Prob;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +74,14 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
         surfaceView = findViewById(R.id.surfaceView);
         surfaceView.setZOrderMediaOverlay(true);
         surfaceHolder = surfaceView.getHolder();
+
+        textView1 = findViewById(R.id.textView);
+
+        textView2 = findViewById(R.id.textView2);
+
+        textView3 = findViewById(R.id.textView3);
+
+
 
         surfaceHolder.addCallback(new SurfaceViewTask(surfaceHolder));
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
