@@ -21,9 +21,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
@@ -45,8 +42,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -59,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
     private static final String[] REQUIRED_PERMISSIONS = new String[] {Manifest.permission.CAMERA};
     private Activity activity = this;
     private Context context = this;
+    private static final String modelName = "quantmobilenet_imagenet.pt";
+    private static final int IMAGE_SIZE = 224;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
     private PreviewView previewView;
@@ -101,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
         predictionQueue = new SynchronousQueue();
 
         try {
-            module = Module.load(getModule(this, "mobilenet_imagenet.pt"));
+            module = Module.load(getModule(this, modelName));
         } catch (IOException e) {
             Log.e("MainActivity", "Error reading module", e);
             finish();
@@ -138,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
         Preview preview = new Preview.Builder().build();
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                                           .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                          .setTargetResolution(new Size(224,224))
+                                          .setTargetResolution(new Size(IMAGE_SIZE,IMAGE_SIZE))
                                           .build();
 
 
@@ -151,15 +148,15 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
             public void analyze(@NonNull ImageProxy image) {
                 try {
                     if (module == null) {
-                        module = Module.load(getModule(context, "mobilenet_imagenet.pt"));
+                        module = Module.load(getModule(context, modelName));
                     }
 
-                    FloatBuffer mInputTensorBuffer = Tensor.allocateFloatBuffer(3 * 224 * 224);
-                    Tensor inputTensor = Tensor.fromBlob(mInputTensorBuffer, new long[]{1L, 3L, 224L, 224L});
+                    FloatBuffer mInputTensorBuffer = Tensor.allocateFloatBuffer(3 * IMAGE_SIZE * IMAGE_SIZE);
+                    Tensor inputTensor = Tensor.fromBlob(mInputTensorBuffer, new long[]{1L, 3L, IMAGE_SIZE, IMAGE_SIZE});
 
 
 
-                    TensorImageUtils.imageYUV420CenterCropToFloatBuffer(image.getImage(), 0, 224, 224,
+                    TensorImageUtils.imageYUV420CenterCropToFloatBuffer(image.getImage(), 0, IMAGE_SIZE, IMAGE_SIZE,
                                                                         TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
                                                                         TensorImageUtils.TORCHVISION_NORM_STD_RGB,
                                                                         mInputTensorBuffer,0);
