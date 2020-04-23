@@ -18,6 +18,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
 
     private static final int REQUEST_CODE_PERMISSIONS = 10;
     private static final String[] REQUIRED_PERMISSIONS = new String[] {Manifest.permission.CAMERA};
+    private Activity activity = this;
     private Context context = this;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private Executor executor = Executors.newSingleThreadExecutor();
-    private SynchronousQueue<PriorityQueue> predictionQueue;
+    private SynchronousQueue predictionQueue;
     private PriorityQueue<PredictionTuple> predictionHolder;
 
 
@@ -84,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         previewView = findViewById(R.id.preview_view);
         surfaceView = findViewById(R.id.surfaceView);
         surfaceView.setZOrderMediaOverlay(true);
@@ -94,6 +97,8 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
         textView2 = findViewById(R.id.textView2);
 
         textView3 = findViewById(R.id.textView3);
+
+        predictionQueue = new SynchronousQueue();
 
         try {
             module = Module.load(getModule(this, "mobilenet_imagenet.pt"));
@@ -114,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
 
 
 
-        surfaceHolder.addCallback(new SurfaceViewTask(surfaceHolder));
+        surfaceHolder.addCallback(new SurfaceViewTask(activity, surfaceHolder, predictionQueue, textView1));
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(
                 () -> {
@@ -170,7 +175,8 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
                             topLabel = ImageNetLabels.labels[i];
                         }
                     }
-
+                    PredictionTuple predictionTuple = new PredictionTuple(topScore, topLabel);
+                    predictionQueue.add(predictionTuple);
                     image.close();
                     Log.v("ImageAnalysis", String.format("%s: %s", topLabel, topScore));
                 } catch (IOException e) {

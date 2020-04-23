@@ -2,18 +2,18 @@ package com.ali.mobileclassification;
 
 public class PredictionTuple implements  Comparable<PredictionTuple>{
     float probability;
-    int index;
-    public PredictionTuple(float probability, int index) {
+    String label;
+    public PredictionTuple(float probability, String label) {
         this.probability = probability;
-        this.index = index;
+        this.label = label;
     }
 
     public float getProbability() {
         return probability;
     }
 
-    public int getIndex() {
-        return index;
+    public String getLabel() {
+        return label;
     }
 
     @Override
