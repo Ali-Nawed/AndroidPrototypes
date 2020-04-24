@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
     private static final String[] REQUIRED_PERMISSIONS = new String[] {Manifest.permission.CAMERA};
     private Activity activity = this;
     private Context context = this;
-    private static final String modelName = "quantmobilenet_imagenet.pt";
+    private static final String modelName = "mobilenet-CIFAR100_224.pt";
     private static final int IMAGE_SIZE = 224;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
@@ -71,14 +71,6 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
     private SynchronousQueue predictionQueue;
     private PriorityQueue<PredictionTuple> predictionHolder;
 
-
-    private String label1;
-    private String label2;
-    private String label3;
-    private float label1Prob;
-    private float label2Prob;
-    private float label3Prob;
-    private FloatBuffer mInputTensorBuffer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -154,14 +146,14 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
                     FloatBuffer mInputTensorBuffer = Tensor.allocateFloatBuffer(3 * IMAGE_SIZE * IMAGE_SIZE);
                     Tensor inputTensor = Tensor.fromBlob(mInputTensorBuffer, new long[]{1L, 3L, IMAGE_SIZE, IMAGE_SIZE});
 
-
-
-                    TensorImageUtils.imageYUV420CenterCropToFloatBuffer(image.getImage(), 0, IMAGE_SIZE, IMAGE_SIZE,
-                                                                        TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
-                                                                        TensorImageUtils.TORCHVISION_NORM_STD_RGB,
+                    int rotation = image.getImageInfo().getRotationDegrees();
+                    TensorImageUtils.imageYUV420CenterCropToFloatBuffer(image.getImage(), rotation, IMAGE_SIZE, IMAGE_SIZE,
+                                                                        CIFAR100.MEAN,
+                                                                        CIFAR100.STD,
                                                                         mInputTensorBuffer,0);
                     Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
                     final float[] scores = outputTensor.getDataAsFloatArray();
+
 
                     String topLabel = "";
                     float topScore = -Float.MAX_VALUE;
@@ -169,13 +161,13 @@ public class MainActivity extends AppCompatActivity implements CameraXConfig.Pro
                         if (scores[i] > topScore) {
 
                             topScore =scores[i];
-                            topLabel = ImageNetLabels.labels[i];
+                            topLabel = CIFAR100.LABELS[i];
                         }
                     }
                     PredictionTuple predictionTuple = new PredictionTuple(topScore, topLabel);
                     predictionQueue.add(predictionTuple);
                     image.close();
-                    Log.v("ImageAnalysis", String.format("%s: %s", topLabel, topScore));
+
                 } catch (IOException e) {
                     Log.e("Image Analysis", "Error during image analysis");
                     e.printStackTrace();

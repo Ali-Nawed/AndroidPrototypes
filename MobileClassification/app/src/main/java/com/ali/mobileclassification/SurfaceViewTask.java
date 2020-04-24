@@ -1,19 +1,13 @@
 package com.ali.mobileclassification;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.widget.TextView;
-
-import androidx.constraintlayout.solver.widgets.Rectangle;
-
 
 import java.util.concurrent.SynchronousQueue;
 
@@ -23,7 +17,7 @@ public class SurfaceViewTask extends AsyncTask implements SurfaceHolder.Callback
     private SurfaceHolder mSurfaceHolder;
     private SynchronousQueue<PredictionTuple> mPredictionQueue;
     private TextView mTextView;
-    private static final int BAR_WIDTH = 10;
+    private static final int BAR_WIDTH = 40;
     private Paint paint = new Paint();
     private boolean surfaceExists;
     private static final int PROB_BAR_MAX_LENGTH = 600;
@@ -76,13 +70,13 @@ public class SurfaceViewTask extends AsyncTask implements SurfaceHolder.Callback
             int probBar1Length = getPobBarLength(prob);
             Canvas canvas = mSurfaceHolder.lockCanvas();
             canvas.drawColor(Color.BLACK);
-            Rect rect1 = new Rect(400+probBar1Length,200,400,160);
+            Rect rect1 = new Rect(400+probBar1Length,160+BAR_WIDTH,400,160);
+
             canvas.drawRect(rect1, paint);
             mSurfaceHolder.unlockCanvasAndPost(canvas);
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-
                     mTextView.setText(fLabel);
                 }
             });
